@@ -30,6 +30,10 @@ Open up your terminal and execute the following commands:
 You will also need to install the corresponding ML library, the instructions for the same are present in the respective websites (look for the installation commands which use ```pip```)
 
 I recommend ```PyTorch``` if you are starting out
+
+Once you have installed the ML library of your choice, update your requirements.txt
+
+	pip freeze > requirements.txt
 	
 
 ## Part 1: Training the Model

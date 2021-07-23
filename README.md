@@ -1,20 +1,21 @@
-The updated problem statement for this assignment can be found at https://github.com/LS-Computer-Vision/opencv-basics
+The updated problem statement for this assignment can be found at https://github.com/LS-Computer-Vision/sudoku-solver-1
 
-# OpenCV Basics
+# Sudoku Solver - 1
 
-Now we begin with using OpenCV, which is an excellent open source library with all sorts of functionality specially suited for Computer Vision tasks
+We will use a combination of OpenCV and Deep Learning to build a Sudoku generator and solver
 
-OpenCV has bindings in many languages, including C++ and Python. We will be using the Python bindings, since we will deal exclusively with Python
+This is the first part of the assignment, where we will explore how to build the ML model required for the next part
 
 ## Resources to get you started
 
-* https://towardsdatascience.com/opencv-complete-beginners-guide-to-master-the-basics-of-computer-vision-with-code-4a1cd0c687f9
-* https://docs.opencv.org/4.5.2/
-	* This is the OpenCV documentation, any time you have a doubt about how to call certain functions or which function does what, this is the site to help you out
-* https://docs.opencv.org/4.5.2/d6/d00/tutorial_py_root.html
-	* Set of official OpenCV tutorials
+There are several resources to get started with Machine Learning
 
-* https://www.pyimagesearch.com/2018/07/19/opencv-tutorial-a-guide-to-learn-opencv/
+* [Linear Regression](https://towardsdatascience.com/linear-regression-from-scratch-cd0dee067f72)
+* [Series on Neural Networks & Deep Learning](http://neuralnetworksanddeeplearning.com/index.html) (best introduction to ML you can have)
+	* This series deals with how to build neural networks from scratch, but we will not be doing so. We will use an ML library to do the hard mathematics for us
+* [Pytorch tutorials](https://pytorch.org/tutorials/)
+* [Keras Tutorials](https://keras.io/guides/)
+* [Tensorflow Tutorials](https://www.tensorflow.org/tutorials)
 
 ## Part 0: Setup
 
@@ -25,73 +26,57 @@ Open up your terminal and execute the following commands:
 	venv/Scripts/activate      # For Windows Users
 	source venv/bin/activate   # For OSX/Linux Users
 	pip install -r requirements.txt
+	
+You will also need to install the corresponding ML library, the instructions for the same are present in the respective websites (look for the installation commands which use ```pip```)
 
-## Part 1: ```Image Editor```
-We will attempt to build a very simple image editor with OpenCV.
-The application needs to have the following features
+I recommend ```PyTorch``` if you are starting out
+	
 
-* The application should run indefinitely until closed. This means that you should have an infinite loop (or a loop that detects closing condition) of some sorts, where in each iteration the updated image is displayed
-	* That's essentially how we display videos using OpenCV, we display each frame as an image, every loop iteration
+## Part 1: Training the Model
+We will be building a digit classifer which takes as input a ```28x28``` image of a handwritten digit, and outputs the predicted value of which digit it is
 
-* 
-		python editor.py image.jpg 1280 720
+The dataset we will use is the **MNIST** dataset, a collection of ```60000``` training images (and labels) and ```10000``` test images (and labels). The training data is loaded as a ```numpy``` array of shape ```(60000,784)```, where each row is a vector of ```784``` elements, which is basically the ```28x28``` pixel values flattened out. The pixel values lie between ```0-255```, ```0``` being black and ```255``` being white
 
-	Should launch an OpenCV window with the image, with the dimensions 1280 x 720. The width and height parameters can be kept optional (with some default values if not stated)
-	* Use the ```argparse``` module to make your life easier and parse command line arguments easily
-* If the image file does not exist, launch a window with the image completely white
+Take a note of the fact that you may have to preproces this dataset in order to feed it into your model, eg you may wish to divide by ```255``` to bring the values between ```0-1```, or normalize the data, or convert it into images (```28x28``` array instead of ```784``` array) if you are using a CNN
 
-* The user can edit the image by clicking on it to place points. The points placed will have the color red, green, or blue, depending on what the ```current color selection ```is
+Now the ML library is yours to choose, and so is the model. For people starting out with ML I recommend the ```PyTorch``` library and a simple **Neural Network** as your model. For more advanced students, you can consider CNN's and other networks
 
-* The ``current color selection`` can be changed to 
-	* red by pressing the ```R``` key
-	* green by pressing the ```G``` key
-	* blue by pressing the ```B``` key
+```dataLoader.py``` contains the code to load the data, and ```model.py	``` is the file you will be editing, which will contain the code to train the model and make predictions
 
-* Print the ```current color selection``` value to the console every time it is changed
+For beginners, much of the boilerplate has already been written out, and all you have to do is to edit the pieces of code between ```#Start Editing``` and ```#End Editing``` comments.
 
-* Pressing ```Q``` should save the image to the file and exit
+If you are familiar with ML libraries already, feel free to make edits to other parts of the code if it helps you build a better model. (Don't do stuff like make the ```test()``` function always return 100% accuracy 😁)
 
-## Part 2: ```Video Chat Application```
+Regardless of whether you are familiar with ML or not, I recommend you to fiddle around with the hyperparameters like learning rate, batch size, number of epochs. You will find that there is a huge difference in accuracy between the optimal and sub-optimal hyperparameters.
 
-We will now harness OpenCV's power to make the frontend of a video chat application.
+You can even try setting up a grid search for the optimal hyperparameters if you feel courageous enough.
 
-* https://www.geeksforgeeks.org/python-opencv-capture-video-from-camera/
-	* This will help in understanding how video from webcam (and video in general) can be captured and displayed in OpenCV
+I also recommend that if you are already done with the exercise, you can try doing a simple **train-validation** split and find the validation error in each epoch. With this you can verify that overfitting is not happening, and you can also save only the model trained by the epoch which generated least validation error. You can also try [**k-fold cross validation**](https://machinelearningmastery.com/k-fold-cross-validation/) for better evaluation of your model
 
-* 
-		python video.py video.mp4 1280 720
-		
-	Should launch an OpenCV window with the video playing (loop it around once the video ends), with the dimensions 1280x720. Again, the dimensions can be kept optional arguments
+## Part 2: Analysis
 
-* Display your webcam feed in a small rectangle on the upper left corner on top of the already playing video
-	* If your webcam is not working for some reason, you can use a default video feed
+Analyse the results that you get. Make some charts about how your test accuracy varies with hyperparameters chosen to train, how the train/validation loss varies with epochs etc.
 
-* Your webcam feed should have a red border around it
-* There should be the following modes to display the webcam feed
-	* RGB mode (default), select by pressing ```1```
-	* Grayscale mode, select by pressing ```2```
-	* Blurred RGB mode, select by pressing ```3```
+This is where you apply the analytical part of your brain, and fiddle around with your model (you can even try different models and compare their results) in order to achieve the best results possible
 
-* Draw a small blue cross at the center of the screen
-
-* Pressing ```Q``` should quit the application
+Write down your conclusions (and include the charts/graphs) in ```explanation.pdf```
 
 ## Submission Instructions
 
-Your assignment repository (https://github.com/LS-Computer-Vision/opencv-basics-{username}) should have the following contents pushed to it
+Your assignment repository (https://github.com/LS-Computer-Vision/sudoku-solver-1-{username}) should have the following contents pushed to it.
+You need a minimum of 90% accuracy to past the automated tests
 
 	repository root
 	├── assets
-	│   ├── videos
-	│   │   └── Videos you need
-	│   └── images
-	│       └── Images you need
+	│   ├── all the data files
+	│   └── model
 	├── .gitignore
 	├── README.md
 	├── requirements.txt
-	├── video.py
-	├── editor.py
+	├── dataLoader.py
+	├── model.py
+	├── test_model.py (don't touch this)
 	└── (Not pushed, ignored by git) venv
 
 ## Deadline
-The deadline for this assignment is kept at 18 July 11:59 PM
+The deadline for this assignment is kept at 29 July 11:59 PM

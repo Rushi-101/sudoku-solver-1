@@ -16,6 +16,7 @@ py==1.10.0
 pyparsing==2.4.7
 pytest==6.2.4
 python-dateutil==2.8.1
+python-mnist==0.7
 six==1.16.0
 toml==0.10.2
 typing-extensions==3.10.0.0

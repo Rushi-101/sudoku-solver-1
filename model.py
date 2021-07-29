@@ -9,12 +9,40 @@ import numpy as np
 from dataLoader import Loader
 import os
 import cv2
-
+import torch
+import torch.optim as optim
+import torch.nn as nn
+import torch.nn.functional as F
+import matplotlib.pyplot as plt
 # (Optional) If you want to define any custom module (eg a custom pytorch module), this is the place to do so
 # Start Editing
 # End Editing
 
+class Network(nn.Module):
+    def __init__(self):
+        super().__init__()
 
+        self.fc1 = nn.Linear(in_features=28*28, out_features=512)
+        self.fc1_bn = nn.BatchNorm1d(512)
+
+        self.fc2 = nn.Linear(in_features=512, out_features=256)
+        self.fc2_bn = nn.BatchNorm1d(256)
+ 
+        self.out = nn.Linear(in_features=256, out_features=10)
+
+    def forward(self, t):
+
+        t = self.fc1(t)
+        t = self.fc1_bn(t)
+        t = F.relu(t)
+       
+        t = self.fc2(t)
+        t = self.fc2_bn(t)
+        t = F.relu(t)
+
+        t = self.out(t)
+        t = F.softmax(t, dim=1)
+        return t
 # This is the class for training our model
 class Trainer:
 	def __init__(self):
@@ -22,9 +50,9 @@ class Trainer:
 		# Seed the RNG's
 		# This is the point where you seed your ML library, eg torch.manual_seed(12345)
 		# Start Editing
+		torch.manual_seed(12345)
 		np.random.seed(12345)
 		random.seed(12345)
-
 		# End Editing
 
 		# Set hyperparameters. Fiddle around with the hyperparameters as different ones can give you better results
@@ -43,9 +71,9 @@ class Trainer:
 		# Also set an appropriate loss function. For beginners I suggest the Cross Entropy Loss
 		# Also set an appropriate optimizer. For beginners go with gradient descent (SGD), but others can play around with Adam, AdaGrad and you can even try a scheduler for the learning rate
 		# Start Editing
-		self.model = None
-		self.loss = None
-		self.optimizer = None
+		self.model = Network()
+		self.loss = torch.nn.CrossEntropyLoss()
+		self.optimizer = torch.optim.SGD(self.model.parameters(), lr = 0.05)
 		# End Editing
 
 	def load_data(self):
@@ -56,27 +84,27 @@ class Trainer:
 		# This is the place you can reshape your data (eg for CNN's you will want each data point as 28x28 tensor and not 784 vector)
 		# Don't forget to normalize the data (eg. divide by 255 to bring the data into the range of 0-1)
 		# Start Editing
-		
-
+		self.train_data = torch.tensor(self.loader.train_data/255)
+		self.test_data = torch.tensor(self.loader.test_data/255)
+		self.train_labels = torch.tensor(self.loader.train_labels)
+		self.test_labels = torch.tensor(self.loader.test_labels)
 
 		# End Editing
-		pass
 
 	def save_model(self):
 		# Save the model parameters into the file 'assets/model'
 		# eg. For pytorch, torch.save(self.model.state_dict(), 'assets/model')
 		# Start Editing
-		
+		torch.save(self.model.state_dict(), 'assets/model')
 
 
 		# End Editing
-		pass
 
 	def load_model(self):
 		# Load the model parameters from the file 'assets/model'
 		if os.path.exists('assets/model'):
+			self.model.load_state_dict(torch.load('assets/model'))
 			# eg. For pytorch, self.model.load_state_dict(torch.load('assets/model'))
-			pass
 		else:
 			raise Exception('Model not trained')
 
@@ -85,8 +113,10 @@ class Trainer:
 			return
 
 		print("Training...")
+		train_loss1 = []
 		for epoch in range(self.num_epochs):
 			train_loss = self.run_epoch()
+			train_loss1.append(train_loss)  
 
 			# For beginners, you can leave this alone as it is
 			# For others, you can try out splitting the train data into train + val data, and use the validation loss to determine whether to save the model or not
@@ -97,6 +127,8 @@ class Trainer:
 			print(f'	Epoch #{epoch+1} trained')
 			print(f'		Train loss: {train_loss:.3f}')
 		print('Training Complete')
+		plt.plot(range(self.num_epochs), train_loss1)
+		plt.savefig('assets/train_loss.png')
 
 	def test(self):
 		if not self.model:
@@ -117,6 +149,10 @@ class Trainer:
 			batch_Y = self.test_labels[batch: batch+self.batch_size] # shape [batch_size,]
 
 			# Find the predictions
+			preds = self.model(batch_X.float())                                         
+			loss = self.loss(preds, batch_Y.long())                           # Calculate Loss                                                 # Update Weights
+			running_loss += loss.item()   
+			correct += preds.argmax(dim=1).eq(batch_Y.long()).sum().item()
 			# Find the loss
 			# Find the number of correct predictions and update correct
 
@@ -140,7 +176,7 @@ class Trainer:
 		# Set the ML library to enable the parameter training
 
 		# Shuffle the data (make sure to shuffle the train data in the same permutation as the train labels)
-		
+
 		i = 0 # Number of batches
 		for batch in range(0, self.train_data.shape[0], self.batch_size):
 			batch_X = self.train_data[batch: batch+self.batch_size] # shape [batch_size,784] or [batch_size,28,28]
@@ -148,7 +184,14 @@ class Trainer:
 
 
 			# Zero out the grads for the optimizer
-			
+			self.optimizer.zero_grad() 
+			preds = self.model(batch_X.float())                                         
+			loss = self.loss(preds, batch_Y.long())   
+                      
+			loss.backward()                                                        # Calculate Gradients
+			self.optimizer.step()                                                       # Update Weights
+			running_loss += loss.item()                                              # Calculating total loss 
+			#total_preds += preds.argmax(dim=1).eq(labels.cuda()).sum().item()    			
 			# Find the predictions
 			# Find the loss
 			# Backpropagation
@@ -157,6 +200,7 @@ class Trainer:
 			i += 1
 		
 		# End Editing
+
 
 		return running_loss / i
 
